@@ -39,11 +39,9 @@ def main():
     
     # Output arguments
     parser.add_argument("--project", type=str, default="soccerai_training",
-                        help="Project directory name")
+                        help="Project directory path or name. Examples: '/kaggle/working/soccerai_training' (Kaggle), '/content/drive/MyDrive/soccer_ai/training' (Colab), or just 'soccerai_training' (current dir)")
     parser.add_argument("--name", type=str, default=None,
                         help="Run name")
-    parser.add_argument("--output-dir", type=str, default=None,
-                        help="Output directory (default: current directory)")
     
     # Data preprocessing
     parser.add_argument("--skip-download", action="store_true",
@@ -52,10 +50,6 @@ def main():
                         help="Path to existing dataset (if skip-download)")
     
     args = parser.parse_args()
-    
-    # Set output directory
-    if args.output_dir:
-        os.chdir(args.output_dir)
     
     # Download dataset
     if args.skip_download:
