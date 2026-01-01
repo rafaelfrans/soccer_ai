@@ -44,6 +44,20 @@ python train.py \
   --imgsz 1280
 ```
 
+Fine-tune on small dataset (freeze backbone, lower learning rate):
+
+```bash
+python train.py \
+  --roboflow-api-key YOUR_API_KEY \
+  --model-path /path/to/pretrained/model.pt \
+  --freeze 24 \
+  --lr0 1e-4 \
+  --lrf 0.01 \
+  --batch 10 \
+  --epochs 35 \
+  --imgsz 1280
+```
+
 **Arguments:**
 - `--roboflow-api-key`: Roboflow API key (required)
 - `--roboflow-workspace`: Roboflow workspace name (default: soccer-ai-lkex8)
@@ -55,6 +69,9 @@ python train.py \
 - `--imgsz`: Image size (default: 1280)
 - `--device`: Device ID, 0 for GPU or 'cpu' (default: 0)
 - `--patience`: Early stopping patience (default: 5)
+- `--freeze`: Number of layers to freeze (e.g., 24 freezes entire backbone for fine-tuning detection layers)
+- `--lr0`: Initial learning rate (e.g., 1e-4 for fine-tuning on small datasets)
+- `--lrf`: Final learning rate factor (final_lr = lr0 * lrf, e.g., 0.01)
 - `--project`: Project directory name (default: soccerai_training)
 - `--name`: Run name (optional)
 - `--skip-download`: Skip dataset download (use existing dataset)

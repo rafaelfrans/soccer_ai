@@ -30,12 +30,20 @@ def main():
                         help="Batch size")
     parser.add_argument("--epochs", type=int, default=35,
                         help="Number of training epochs")
-    parser.add_argument("--imgsz", type=int, default=1280,
+    parser.add_argument("--imgsz", type=int, default=640,
                         help="Image size")
     parser.add_argument("--device", type=int, default=0,
                         help="Device ID (0 for GPU, cpu for CPU)")
     parser.add_argument("--patience", type=int, default=5,
                         help="Early stopping patience")
+    
+    # Fine-tuning arguments
+    parser.add_argument("--freeze", type=int, default=None,
+                        help="Number of layers to freeze (e.g., 24 freezes entire backbone for fine-tuning detection layers)")
+    parser.add_argument("--lr0", type=float, default=None,
+                        help="Initial learning rate (e.g., 1e-4 for fine-tuning on small datasets)")
+    parser.add_argument("--lrf", type=float, default=None,
+                        help="Final learning rate factor (final_lr = lr0 * lrf, e.g., 0.01)")
     
     # Output arguments
     parser.add_argument("--project", type=str, default="soccerai_training",
@@ -103,7 +111,10 @@ def main():
         patience=args.patience,
         project=args.project,
         name=args.name,
-        plots=True
+        plots=True,
+        freeze=args.freeze,
+        lr0=args.lr0,
+        lrf=args.lrf
     )
     
     print("\n✅ Training complete!")
