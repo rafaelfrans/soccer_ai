@@ -19,8 +19,6 @@ def main():
                         help="Path to input video")
     parser.add_argument("--output", type=str, required=True,
                         help="Path to output video")
-    parser.add_argument("--json", type=str, default=None,
-                        help="Optional path to save bounding box data as JSON. If not specified, auto-generates from output path (e.g., output.mp4 -> output_detections.json)")
     
     # Detection arguments
     parser.add_argument("--conf", type=float, default=0.3,
@@ -61,13 +59,11 @@ def main():
     # Process video
     print(f"📹 Processing video: {args.source}")
     print(f"💾 Output will be saved to: {args.output}")
-    print(f"📊 Detection data will be saved automatically")
     
     processor.process_video(
         source_path=args.source,
         target_path=args.output,
-        reset_tracker=True,
-        json_path=args.json
+        reset_tracker=True
     )
     
     print(f"\n✅ Processing complete!")
