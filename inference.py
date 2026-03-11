@@ -142,9 +142,7 @@ def main():
                 raise RuntimeError(f"ffmpeg failed: {result.stderr[:500]}")
             source_path = tmp_path
         except FileNotFoundError:
-            raise SystemExit(
-                "ffmpeg not found. Install it (e.g. brew install ffmpeg) to use --fix-rotation."
-            ) from None
+            raise SystemExit("ffmpeg not found. Install it (e.g. brew install ffmpeg) to use --fix-rotation.") from None
         except subprocess.TimeoutExpired:
             raise SystemExit("ffmpeg timed out.") from None
 

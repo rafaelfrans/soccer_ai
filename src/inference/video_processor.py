@@ -103,9 +103,7 @@ class VideoProcessor:
             Annotated frame, or tuple of (annotated_frame, detection_data) if return_detections=True
         """
         # Run inference with low conf to retain raw candidates; per-class filtering applied after
-        result = self.model.predict(
-            source=frame, conf=self.conf_min, iou=self.iou_threshold, verbose=False
-        )[0]
+        result = self.model.predict(source=frame, conf=self.conf_min, iou=self.iou_threshold, verbose=False)[0]
         detections = sv.Detections.from_ultralytics(result)
 
         # Separate ball detections, apply per-class confidence filter, and NMS to remove duplicates
