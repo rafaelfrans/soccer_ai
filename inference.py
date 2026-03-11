@@ -7,6 +7,7 @@ import argparse
 import os
 import subprocess
 import tempfile
+import contextlib
 
 from src.inference import AnnotatorConfig, VideoProcessor
 
@@ -154,10 +155,8 @@ def main():
         processor.process_video(source_path=source_path, target_path=args.output, reset_tracker=True)
     finally:
         if args.fix_rotation and source_path != args.source:
-            try:
+            with suppress(OSError):
                 os.unlink(source_path)
-            except OSError:
-                pass
 
     print("\n✅ Processing complete!")
     print(f"📁 Output saved to: {args.output}")
