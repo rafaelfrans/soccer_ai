@@ -28,7 +28,7 @@ def main():
     parser.add_argument(
         "--ball-conf",
         type=float,
-        default=0.2,
+        default=0.1,
         help="Per-class confidence threshold for ball detections",
     )
     parser.add_argument(

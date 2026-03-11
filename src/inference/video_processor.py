@@ -41,7 +41,7 @@ class VideoProcessor:
         model_path: str,
         ball_class_id: int = 0,
         conf_min: float = 0.1,
-        ball_conf: float = 0.2,
+        ball_conf: float = 0.1,
         player_conf: float = 0.4,
         nms_threshold: float = 0.5,
         ball_nms_threshold: float = 0.3,
