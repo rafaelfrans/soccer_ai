@@ -8,13 +8,15 @@ Main class. Initialized with a YOLO model path, then call `process_video()`.
 
 ### Processing Pipeline (per frame)
 
-1. Run YOLO inference → `sv.Detections`
+1. Run YOLO inference with low `conf_min` → `sv.Detections`
 2. Separate ball detections (class 0) from others
-3. Pad ball bounding boxes by 10px (balls are small)
-4. Apply NMS to non-ball detections (class-agnostic)
-5. Subtract 1 from non-ball class IDs (so goalkeeper=0, player=1, referee=2 for the color palette)
-6. Update ByteTrack tracker with non-ball detections
-7. Annotate: ellipses for players/goalkeepers/referees, triangles for ball, labels with tracker IDs
+3. Apply per-class confidence filters: `ball_conf` for ball, `player_conf` for non-ball
+4. Apply NMS to ball detections (removes duplicates)
+5. Pad ball bounding boxes by 10px (balls are small)
+6. Apply NMS to non-ball detections (class-agnostic)
+7. Subtract 1 from non-ball class IDs (so goalkeeper=0, player=1, referee=2 for the color palette)
+8. Update ByteTrack tracker with non-ball detections
+9. Annotate: ellipses for players/goalkeepers/referees, triangles for ball, labels with tracker IDs
 
 ### Output
 

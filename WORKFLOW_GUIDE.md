@@ -145,15 +145,14 @@ python train.py \
 python inference.py \
   --model-path /path/to/best.pt \
   --source /path/to/your/video.mp4 \
-  --output /path/to/annotated_video.mp4 \
-  --conf 0.3
+  --output /path/to/annotated_video.mp4
 ```
 
 **What each part means:**
 - `--model-path`: Path to your trained `best.pt` file
 - `--source`: Path to the video you want to process
 - `--output`: Where to save the annotated video
-- `--conf 0.3`: Confidence threshold (same as your notebook used)
+- Use `--ball-conf` and `--player-conf` for per-class thresholds, or `--preset low-quality` / `--preset high-quality` for video quality presets
 
 **Result:** An annotated video with detected and tracked objects!
 
