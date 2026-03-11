@@ -4,10 +4,10 @@ Inference entry point for soccer AI video processing.
 """
 
 import argparse
+import contextlib
 import os
 import subprocess
 import tempfile
-import contextlib
 
 from src.inference import AnnotatorConfig, VideoProcessor
 
@@ -155,7 +155,7 @@ def main():
         processor.process_video(source_path=source_path, target_path=args.output, reset_tracker=True)
     finally:
         if args.fix_rotation and source_path != args.source:
-            with suppress(OSError):
+            with contextlib.suppress(OSError):
                 os.unlink(source_path)
 
     print("\n✅ Processing complete!")
