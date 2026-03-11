@@ -153,6 +153,7 @@ python inference.py \
 - `--source`: Path to the video you want to process
 - `--output`: Where to save the annotated video
 - Use `--ball-conf` and `--player-conf` for per-class thresholds, or `--preset low-quality` / `--preset high-quality` for video quality presets
+- Use `--fix-rotation` if the output is sideways (common with iPhone MOV files that store rotation in metadata)
 
 **Result:** An annotated video with detected and tracked objects!
 
@@ -643,6 +644,13 @@ A: You can fix it! `git commit --amend` to change the last commit, or make a new
 
 **Q: Should I commit after every small change?**
 A: It's better to commit logical units of work. For example: "Fix bug" or "Add feature" - not every single line edit.
+
+**Q: My annotated video is sideways! (iPhone MOV, portrait video)**
+A: OpenCV ignores rotation metadata in some video files. Add `--fix-rotation` to re-encode with ffmpeg first (requires `ffmpeg` installed, e.g. `brew install ffmpeg`):
+
+```bash
+python inference.py --model-path best.pt --source video.mov --output out.mp4 --fix-rotation
+```
 
 ---
 

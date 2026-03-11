@@ -4,6 +4,9 @@ Inference entry point for soccer AI video processing.
 """
 
 import argparse
+import os
+import subprocess
+import tempfile
 
 from src.inference import AnnotatorConfig, VideoProcessor
 
@@ -17,6 +20,11 @@ def main():
     # Video arguments
     parser.add_argument("--source", type=str, required=True, help="Path to input video")
     parser.add_argument("--output", type=str, required=True, help="Path to output video")
+    parser.add_argument(
+        "--fix-rotation",
+        action="store_true",
+        help="Re-encode video with ffmpeg to bake in rotation metadata (fixes sideways iPhone/MOV videos)",
+    )
 
     # Detection arguments
     parser.add_argument(
@@ -104,10 +112,52 @@ def main():
     )
 
     # Process video
-    print(f"📹 Processing video: {args.source}")
+    source_path = args.source
+    if args.fix_rotation:
+        print("📐 Fixing rotation: re-encoding with ffmpeg (bakes in orientation metadata)...")
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            result = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-i",
+                    args.source,
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "fast",
+                    "-crf",
+                    "23",
+                    "-an",
+                    "-y",
+                    tmp_path,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"ffmpeg failed: {result.stderr[:500]}")
+            source_path = tmp_path
+        except FileNotFoundError:
+            raise SystemExit(
+                "ffmpeg not found. Install it (e.g. brew install ffmpeg) to use --fix-rotation."
+            ) from None
+        except subprocess.TimeoutExpired:
+            raise SystemExit("ffmpeg timed out.") from None
+
+    print(f"📹 Processing video: {source_path}")
     print(f"💾 Output will be saved to: {args.output}")
 
-    processor.process_video(source_path=args.source, target_path=args.output, reset_tracker=True)
+    try:
+        processor.process_video(source_path=source_path, target_path=args.output, reset_tracker=True)
+    finally:
+        if args.fix_rotation and source_path != args.source:
+            try:
+                os.unlink(source_path)
+            except OSError:
+                pass
 
     print("\n✅ Processing complete!")
     print(f"📁 Output saved to: {args.output}")
