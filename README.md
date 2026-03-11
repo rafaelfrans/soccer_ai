@@ -85,16 +85,40 @@ Process a video with object detection and tracking:
 python inference.py \
   --model-path /path/to/trained/model.pt \
   --source /path/to/input/video.mp4 \
-  --output /path/to/output/video.mp4 \
-  --conf 0.3
+  --output /path/to/output/video.mp4
+```
+
+For low-quality footage (more permissive thresholds):
+
+```bash
+python inference.py \
+  --model-path /path/to/model.pt \
+  --source video.mp4 \
+  --output output.mp4 \
+  --preset low-quality
+```
+
+For high-quality footage (stricter thresholds, fewer false positives):
+
+```bash
+python inference.py \
+  --model-path /path/to/model.pt \
+  --source video.mp4 \
+  --output output.mp4 \
+  --preset high-quality
 ```
 
 **Arguments:**
 - `--model-path`: Path to trained model (required)
 - `--source`: Path to input video (required)
 - `--output`: Path to output video (required)
-- `--conf`: Confidence threshold (default: 0.3)
+- `--conf-min`: Minimum confidence for YOLO raw output (default: 0.1)
+- `--ball-conf`: Per-class confidence threshold for ball (default: 0.2)
+- `--player-conf`: Per-class confidence threshold for non-ball (default: 0.4)
+- `--preset`: Video quality preset: `low-quality` or `high-quality` (overrides ball-conf and player-conf)
 - `--nms-threshold`: NMS threshold for non-ball detections (default: 0.5)
+- `--ball-nms-threshold`: NMS threshold for ball detections (default: 0.3)
+- `--iou`: IoU threshold for YOLO internal NMS (default: 0.5, lower = more aggressive suppression)
 - `--ball-class-id`: Class ID for ball (default: 0)
 - `--ellipse-colors`: Colors for ellipse annotations (default: #00BFFF #FF1493 #FFD700)
 - `--ellipse-thickness`: Ellipse thickness (default: 2)

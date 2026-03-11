@@ -3,6 +3,18 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Model weights
+*.pt
+
+# Inference outputs
+testing/
+
+# Training runs (Ultralytics YOLO)
+runs/
+
+# Mac system files
+.DS_Store
+
 # C extensions
 *.so
 

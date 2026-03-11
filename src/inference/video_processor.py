@@ -40,8 +40,12 @@ class VideoProcessor:
         self,
         model_path: str,
         ball_class_id: int = 0,
-        conf_threshold: float = 0.3,
+        conf_min: float = 0.1,
+        ball_conf: float = 0.1,
+        player_conf: float = 0.4,
         nms_threshold: float = 0.5,
+        ball_nms_threshold: float = 0.3,
+        iou_threshold: float = 0.5,
         config: AnnotatorConfig | None = None,
     ):
         """
@@ -50,14 +54,22 @@ class VideoProcessor:
         Args:
             model_path: Path to trained YOLO model
             ball_class_id: Class ID for ball (default: 0)
-            conf_threshold: Confidence threshold for detections
+            conf_min: Minimum confidence for YOLO raw output (keep low to retain candidates)
+            ball_conf: Per-class confidence threshold for ball detections
+            player_conf: Per-class confidence threshold for non-ball (players, goalkeepers, referees)
             nms_threshold: NMS threshold for non-ball detections
+            ball_nms_threshold: NMS threshold for ball detections (removes duplicate ball detections)
+            iou_threshold: IoU threshold for YOLO internal NMS
             config: Annotator configuration
         """
         self.model = YOLO(model_path)
         self.ball_class_id = ball_class_id
-        self.conf_threshold = conf_threshold
+        self.conf_min = conf_min
+        self.ball_conf = ball_conf
+        self.player_conf = player_conf
         self.nms_threshold = nms_threshold
+        self.ball_nms_threshold = ball_nms_threshold
+        self.iou_threshold = iou_threshold
         self.config = config or AnnotatorConfig()
 
         # Initialize annotators
@@ -90,16 +102,23 @@ class VideoProcessor:
         Returns:
             Annotated frame, or tuple of (annotated_frame, detection_data) if return_detections=True
         """
-        # Run inference
-        result = self.model.predict(source=frame, conf=self.conf_threshold, verbose=False)[0]
+        # Run inference with low conf to retain raw candidates; per-class filtering applied after
+        result = self.model.predict(source=frame, conf=self.conf_min, iou=self.iou_threshold, verbose=False)[0]
         detections = sv.Detections.from_ultralytics(result)
 
-        # Separate ball detections
+        # Separate ball detections, apply per-class confidence filter, and NMS to remove duplicates
         ball_detections = detections[detections.class_id == self.ball_class_id]
-        ball_detections.xyxy = sv.pad_boxes(xyxy=ball_detections.xyxy, px=10)
+        if ball_detections.confidence is not None:
+            ball_detections = ball_detections[ball_detections.confidence >= self.ball_conf]
+        if len(ball_detections) > 0:
+            ball_detections = ball_detections.with_nms(threshold=self.ball_nms_threshold, class_agnostic=True)
+        if len(ball_detections) > 0:
+            ball_detections.xyxy = sv.pad_boxes(xyxy=ball_detections.xyxy, px=10)
 
-        # Process other detections (players, goalkeepers, referees)
+        # Process other detections (players, goalkeepers, referees) with per-class confidence filter
         all_detections = detections[detections.class_id != self.ball_class_id]
+        if all_detections.confidence is not None:
+            all_detections = all_detections[all_detections.confidence >= self.player_conf]
         all_detections = all_detections.with_nms(threshold=self.nms_threshold, class_agnostic=True)
         # Adjust class IDs (subtract 1 since ball is class 0)
         all_detections.class_id -= 1
