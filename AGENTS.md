@@ -61,6 +61,17 @@ Roboflow raw labels use different class IDs that get remapped during training:
 - **Inference**: Colab or local — clone repo, install deps, run `inference.py`
 - **Development**: Local with Cursor or Claude Code
 
+## Before merging to `main`
+
+Agents and contributors must pass local CI **before** merging or pushing to `main` (matches GitHub Actions):
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt   # once per environment
+./scripts/ci_local.sh
+```
+
+Do not merge until this exits successfully. See `.cursor/rules/merge-gate-main.mdc`.
+
 ## Conventions
 
 - Entry point scripts live in project root, all logic lives in `src/`

@@ -1,0 +1,20 @@
+---
+description: Run local CI before merging to main; matches GitHub Actions
+alwaysApply: true
+---
+
+# Merge gate for `main`
+
+Before **merging or pushing to `main`**, run the project CI locally and fix any failures:
+
+```bash
+./scripts/ci_local.sh
+```
+
+Or: `bash scripts/ci_local.sh` if the file is not executable.
+
+This runs the same steps as `.github/workflows/ci.yml`: `ruff check`, `ruff format --check`, `mypy src/`, `pytest`.
+
+**Do not** merge or push to `main` until this script exits successfully. If you changed Python code under `src/`, scripts, or tests, run it before proposing a merge.
+
+Prerequisite: `pip install -r requirements.txt -r requirements-dev.txt` (includes `ruff`, `mypy`, `types-PyYAML`, `pytest`).
