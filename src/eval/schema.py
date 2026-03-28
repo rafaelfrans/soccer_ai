@@ -51,7 +51,12 @@ def pred_tracked_class_to_canonical(shifted_id: int) -> int:
     return s + 1
 
 
-def unpad_ball_xyxy(xyxy: list[float] | tuple[float, ...], pad_px: int = BALL_PAD_PX, width: int | None = None, height: int | None = None) -> tuple[float, float, float, float]:
+def unpad_ball_xyxy(
+    xyxy: list[float] | tuple[float, ...],
+    pad_px: int = BALL_PAD_PX,
+    width: int | None = None,
+    height: int | None = None,
+) -> tuple[float, float, float, float]:
     """Remove symmetric padding from ball box; clip to image bounds if width/height given."""
     x1, y1, x2, y2 = float(xyxy[0]), float(xyxy[1]), float(xyxy[2]), float(xyxy[3])
     x1 += pad_px
@@ -95,11 +100,11 @@ def boxes_from_pred_frame(
     """
     # Use key presence so model_only frames with objects: [] do not fall through to full layout.
     if "objects" in frame:
-        out: list[Box] = []
+        objects_out: list[Box] = []
         for o in _json_list(frame, "objects"):
             bbox = o["bbox"]
             conf = o.get("confidence")
-            out.append(
+            objects_out.append(
                 Box(
                     x1=float(bbox[0]),
                     y1=float(bbox[1]),
@@ -110,7 +115,7 @@ def boxes_from_pred_frame(
                     track_id=int(o["track_id"]) if o.get("track_id") is not None else None,
                 )
             )
-        return out
+        return objects_out
 
     out: list[Box] = []
     for o in _json_list(frame, "tracked_objects"):

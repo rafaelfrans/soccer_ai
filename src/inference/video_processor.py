@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import supervision as sv
 from tqdm import tqdm
@@ -71,13 +71,16 @@ class VideoProcessor:
         self.ball_nms_threshold = ball_nms_threshold
         self.iou_threshold = iou_threshold
         self.config = config or AnnotatorConfig()
+        ellipse_colors = self.config.ellipse_colors
+        label_colors = self.config.label_colors
+        assert ellipse_colors is not None and label_colors is not None  # set in AnnotatorConfig.__post_init__
 
         # Initialize annotators
         self.ellipse_annotator = sv.EllipseAnnotator(
-            color=sv.ColorPalette.from_hex(self.config.ellipse_colors), thickness=self.config.ellipse_thickness
+            color=sv.ColorPalette.from_hex(ellipse_colors), thickness=self.config.ellipse_thickness
         )
         self.label_annotator = sv.LabelAnnotator(
-            color=sv.ColorPalette.from_hex(self.config.label_colors),
+            color=sv.ColorPalette.from_hex(label_colors),
             text_color=sv.Color.from_hex(self.config.label_text_color),
             text_position=getattr(sv.Position, self.config.label_text_position),
         )
@@ -107,25 +110,26 @@ class VideoProcessor:
         detections = sv.Detections.from_ultralytics(result)
 
         # Separate ball detections, apply per-class confidence filter, and NMS to remove duplicates
-        ball_detections = detections[detections.class_id == self.ball_class_id]
+        ball_detections = cast(sv.Detections, detections[detections.class_id == self.ball_class_id])
         if ball_detections.confidence is not None:
-            ball_detections = ball_detections[ball_detections.confidence >= self.ball_conf]
+            ball_detections = cast(sv.Detections, ball_detections[ball_detections.confidence >= self.ball_conf])
         if len(ball_detections) > 0:
             ball_detections = ball_detections.with_nms(threshold=self.ball_nms_threshold, class_agnostic=True)
         if len(ball_detections) > 0:
             ball_detections.xyxy = sv.pad_boxes(xyxy=ball_detections.xyxy, px=10)
 
         # Process other detections (players, goalkeepers, referees) with per-class confidence filter
-        all_detections = detections[detections.class_id != self.ball_class_id]
+        all_detections = cast(sv.Detections, detections[detections.class_id != self.ball_class_id])
         if all_detections.confidence is not None:
-            all_detections = all_detections[all_detections.confidence >= self.player_conf]
+            all_detections = cast(sv.Detections, all_detections[all_detections.confidence >= self.player_conf])
         all_detections = all_detections.with_nms(threshold=self.nms_threshold, class_agnostic=True)
         # Adjust class IDs (subtract 1 since ball is class 0)
-        all_detections.class_id -= 1
+        if all_detections.class_id is not None:
+            all_detections.class_id = all_detections.class_id - 1
         all_detections = self.tracker.update_with_detections(detections=all_detections)
 
         # Create labels with tracker IDs
-        labels = [f"#{tracker_id}" for tracker_id in all_detections.tracker_id]
+        labels = [f"#{int(tid)}" for tid in all_detections.tracker_id] if all_detections.tracker_id is not None else []
 
         # Annotate frame
         annotated_frame = frame.copy()
@@ -154,9 +158,12 @@ class VideoProcessor:
 
         # Extract tracked objects (players, goalkeepers, referees)
         if len(tracked_detections) > 0:
+            t_xyxy = tracked_detections.xyxy
+            t_class_id = tracked_detections.class_id
+            assert t_xyxy is not None and t_class_id is not None
             for i in range(len(tracked_detections)):
-                bbox = tracked_detections.xyxy[i].tolist()
-                class_id = int(tracked_detections.class_id[i])
+                bbox = t_xyxy[i].tolist()
+                class_id = int(t_class_id[i])
                 tracker_id = (
                     int(tracked_detections.tracker_id[i]) if tracked_detections.tracker_id is not None else None
                 )
@@ -175,9 +182,12 @@ class VideoProcessor:
 
         # Extract ball detections
         if len(ball_detections) > 0:
+            b_xyxy = ball_detections.xyxy
+            b_class_id = ball_detections.class_id
+            assert b_xyxy is not None and b_class_id is not None
             for i in range(len(ball_detections)):
-                bbox = ball_detections.xyxy[i].tolist()
-                class_id = int(ball_detections.class_id[i])
+                bbox = b_xyxy[i].tolist()
+                class_id = int(b_class_id[i])
                 confidence = float(ball_detections.confidence[i]) if ball_detections.confidence is not None else None
 
                 detection_data["ball"].append(
@@ -199,9 +209,15 @@ class VideoProcessor:
         result = self.model.predict(source=frame, conf=self.conf_min, iou=self.iou_threshold, verbose=False)[0]
         detections = sv.Detections.from_ultralytics(result)
         objects: list[dict[str, Any]] = []
-        for i in range(len(detections)):
-            bbox = detections.xyxy[i].tolist()
-            cid = int(detections.class_id[i])
+        n = len(detections)
+        if n == 0:
+            return {"frame_number": frame_number, "objects": objects}
+        d_xyxy = detections.xyxy
+        d_class_id = detections.class_id
+        assert d_xyxy is not None and d_class_id is not None
+        for i in range(n):
+            bbox = d_xyxy[i].tolist()
+            cid = int(d_class_id[i])
             conf = float(detections.confidence[i]) if detections.confidence is not None else None
             objects.append({"bbox": bbox, "class_id": cid, "confidence": conf})
         return {"frame_number": frame_number, "objects": objects}

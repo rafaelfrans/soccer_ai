@@ -163,14 +163,8 @@ def _ap_at_threshold(
     # Collect all GT count
     total_gt = sum(1 for fn in gt_by_frame for b in gt_by_frame[fn] if b.class_id == class_id)
     if total_gt == 0:
-        # No GT: any prediction is FP; AP undefined, return 0
-        preds = [
-            (b.confidence if b.confidence is not None else 0.0, fn, bi)
-            for fn in pred_by_frame
-            for bi, b in enumerate(pred_by_frame[fn])
-            if b.class_id == class_id
-        ]
-        return 0.0 if not preds else 0.0
+        # No GT: AP undefined; any prediction would be FP — report 0
+        return 0.0
 
     # List of predictions (score, frame, index_in_frame)
     preds: list[tuple[float, int, int]] = []

@@ -56,9 +56,7 @@ def write_mot_gt_txt(path: Path, gt_by_frame: dict[int, list[Box]], num_frames: 
                 continue
             left, top, w, h = _xyxy_to_xywh(b)
             # frame, id, bb_left, bb_top, bb_w, bb_h, conf, class, visibility
-            lines.append(
-                f"{frame_1},{int(b.track_id)},{left:.2f},{top:.2f},{w:.2f},{h:.2f},1,{MOT_PERSON_CLASS},1\n"
-            )
+            lines.append(f"{frame_1},{int(b.track_id)},{left:.2f},{top:.2f},{w:.2f},{h:.2f},1,{MOT_PERSON_CLASS},1\n")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("".join(lines), encoding="utf-8")
 
@@ -178,7 +176,7 @@ def evaluate_tracking_trackeval(
 
         res = TrackingEvalResult()
         res.raw = output_res
-        ds = output_res.get("MotChallenge2DBox") or next(iter(output_res.values()), {})
+        ds: dict[str, Any] = output_res.get("MotChallenge2DBox") or next(iter(output_res.values()), {})
         trk_block = ds.get(tracker_name, {})
         combined = trk_block.get("COMBINED_SEQ", {})
         ped = combined.get("pedestrian", {})

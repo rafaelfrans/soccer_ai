@@ -47,9 +47,7 @@ def _require_soccer_net():
         from SoccerNet.Downloader import SoccerNetDownloader
         from SoccerNet.utils import getListGames
     except ImportError as e:
-        raise SystemExit(
-            "SoccerNet is not installed. Run: pip install SoccerNet\n" f"Original error: {e}"
-        ) from e
+        raise SystemExit(f"SoccerNet is not installed. Run: pip install SoccerNet\nOriginal error: {e}") from e
     return SoccerNetDownloader, getListGames
 
 
