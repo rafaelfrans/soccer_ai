@@ -32,19 +32,42 @@ One file per video, aligned frame-by-frame with inference output (`frame_number`
 - `track_id`: optional; required only if you run `python eval.py --tracking` (HOTA / MOTA / IDF1 on **person** classes). Use stable IDs per person across frames.
 - Ball boxes should be **tight**; the eval un-pads full-pipeline predictions by 10px before IoU.
 
-## SoccerNet
+## SoccerNet-v3 automated prep
 
-SoccerNet is a family of [benchmarks and datasets](https://www.soccer-net.org/) for broadcast soccer. It does not ship this repo’s four-class labels directly; typical workflow is:
+`soccer_ai` includes a helper that downloads **one** SoccerNet-v3 game (`Labels-v3.json` + `Frames-v3.zip`), converts labels to this repo’s GT JSON, builds a **clip MP4** (ffmpeg), and prints paths for inference + eval.
 
-1. Take clips or frames from a SoccerNet split that allows your use case (check the license for each download).
-2. Remap any public labels (or add your own) to `class_id` 0–3.
-3. List videos and GT paths in a manifest YAML (see `example_manifest.yaml`).
-4. Run full inference on the **same** source resolution, then `eval.py`.
+**Dependencies (not in base `requirements.txt`):** `pip install SoccerNet Pillow`, **ffmpeg** on `PATH`, and network access to the SoccerNet host.
+
+**Offline smoke test (no download, 2-frame toy clip):**
+
+```bash
+python scripts/prepare_soccer_net_eval.py --sample --output-dir data/sn_eval_sample
+```
+
+**Real data (one game from the frames split):**
+
+```bash
+python scripts/prepare_soccer_net_eval.py --soccer-net-root data/SoccerNet --output-dir data/sn_eval_clip --split test --game-index 0
+# Optional: --max-frames 120  for a shorter MP4
+```
+
+Then run your model and eval:
+
+```bash
+python inference.py --model-path YOUR.pt --source data/sn_eval_clip/clip.mp4 --output data/sn_eval_clip/out.mp4 --json-only
+python eval.py -g data/sn_eval_clip/gt.json -p data/sn_eval_clip/out_detections.json --mode full
+```
+
+Conversion maps SoccerNet-v3 box classes (ball, team players, goalkeepers, referees) to `class_id` 0–3; field lines, goals, staff, etc. are **skipped**. Jersey `ID` becomes `track_id` when numeric.
+
+## SoccerNet (general)
+
+SoccerNet is a family of [benchmarks and datasets](https://www.soccer-net.org/) for broadcast soccer. Licenses vary by split; cite the dataset papers when publishing.
 
 Useful references:
 
 - SoccerNet-v2: *SoccerNet-v2: A Dataset and Benchmarks for Holistic Understanding of Broadcast Soccer Videos* ([arXiv:2011.13367](https://arxiv.org/abs/2011.13367)).
-- Player/ball detection baselines often report mAP on SoccerNet-derived crops; compare your **system** metrics only after remapping labels and using the same eval protocol.
+- SoccerNet-v3 dataloader and labels: [SoccerNet-v3](https://github.com/SoccerNet/SoccerNet-v3) (bounding boxes on action/replay frames).
 
 ## Commands
 

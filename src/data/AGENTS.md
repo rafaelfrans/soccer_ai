@@ -4,6 +4,7 @@ Handles dataset download, preprocessing, and merging.
 
 ## Key Functions
 
+- `soccer_net_v3.labels_v3_to_eval_gt()` — Converts SoccerNet-v3 `Labels-v3.json` to eval GT JSON (`class_id` 0–3). Used by `scripts/prepare_soccer_net_eval.py`
 - `download_dataset()` — Downloads from Roboflow in YOLOv8 format
 - `fix_data_yaml()` — Overwrites `data.yaml` to enforce 4 classes: `[ball, goalkeeper, player, referee]`
 - `remap_labels()` — Remaps Roboflow class IDs to our 0-3 scheme. Removes labels not in the class map and deletes orphaned images

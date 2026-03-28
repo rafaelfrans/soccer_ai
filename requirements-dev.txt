@@ -3,3 +3,6 @@ pytest>=8.0.0
 mypy>=1.9.0
 pre-commit>=3.7.0
 types-PyYAML>=6.0
+# Optional: SoccerNet-v3 eval clip prep (scripts/prepare_soccer_net_eval.py)
+SoccerNet>=0.1.62
+Pillow>=10.0.0

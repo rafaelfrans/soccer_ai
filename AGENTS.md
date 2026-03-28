@@ -27,6 +27,7 @@ soccer_ai/
 ├── merge_datasets.py      # Dataset merging utility
 ├── eval.py                # Evaluate predictions JSON vs ground-truth JSON
 ├── eval_sets/             # Versioned eval split manifests + GT schema notes
+├── scripts/               # prepare_soccer_net_eval.py (SoccerNet-v3 → clip + GT JSON)
 ├── requirements.txt       # Dependencies
 └── src/
     ├── data/
