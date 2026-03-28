@@ -1,0 +1,33 @@
+{
+  "GameMetadata": {
+    "list_actions": ["0.png"],
+    "UrlLocal": "sample_game"
+  },
+  "actions": {
+    "0.png": {
+      "linked_replays": ["0_1.png"],
+      "bboxes": [
+        {
+          "class": "Ball",
+          "points": { "x1": 10.0, "y1": 10.0, "x2": 40.0, "y2": 40.0 },
+          "ID": null
+        }
+      ],
+      "imageMetadata": { "width": 640, "height": 360 },
+      "lines": []
+    }
+  },
+  "replays": {
+    "0_1.png": {
+      "bboxes": [
+        {
+          "class": "Player team left",
+          "points": { "x1": 100.0, "y1": 100.0, "x2": 150.0, "y2": 200.0 },
+          "ID": "10"
+        }
+      ],
+      "imageMetadata": { "width": 640, "height": 360 },
+      "lines": []
+    }
+  }
+}

@@ -67,6 +67,18 @@ def main():
         help="Preset for video quality: low-quality (more permissive) or high-quality (stricter)",
     )
     parser.add_argument("--ball-class-id", type=int, default=0, help="Class ID for ball")
+    parser.add_argument(
+        "--eval-mode",
+        type=str,
+        choices=["full", "model_only"],
+        default="full",
+        help="full: pipeline JSON (tracked_objects + ball); model_only: raw YOLO objects only (ablation eval)",
+    )
+    parser.add_argument(
+        "--json-only",
+        action="store_true",
+        help="Do not write output video; only write detections JSON (faster for eval)",
+    )
 
     # Annotator arguments (optional customization)
     parser.add_argument(
@@ -114,10 +126,11 @@ def main():
 
     # Process video
     source_path = args.source
+    rotation_tmp: str | None = None
     if args.fix_rotation:
         print("📐 Fixing rotation: re-encoding with ffmpeg (bakes in orientation metadata)...")
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-            tmp_path = tmp.name
+            rotation_tmp = tmp.name
         try:
             result = subprocess.run(
                 [
@@ -132,32 +145,53 @@ def main():
                     "23",
                     "-an",
                     "-y",
-                    tmp_path,
+                    rotation_tmp,
                 ],
                 capture_output=True,
                 text=True,
                 timeout=600,
             )
             if result.returncode != 0:
+                if rotation_tmp and os.path.isfile(rotation_tmp):
+                    os.unlink(rotation_tmp)
                 raise RuntimeError(f"ffmpeg failed: {result.stderr[:500]}")
-            source_path = tmp_path
+            source_path = rotation_tmp
         except FileNotFoundError:
+            if rotation_tmp and os.path.isfile(rotation_tmp):
+                with contextlib.suppress(OSError):
+                    os.unlink(rotation_tmp)
             raise SystemExit("ffmpeg not found. Install it (e.g. brew install ffmpeg) to use --fix-rotation.") from None
         except subprocess.TimeoutExpired:
+            if rotation_tmp and os.path.isfile(rotation_tmp):
+                with contextlib.suppress(OSError):
+                    os.unlink(rotation_tmp)
             raise SystemExit("ffmpeg timed out.") from None
 
     print(f"📹 Processing video: {source_path}")
-    print(f"💾 Output will be saved to: {args.output}")
+    if args.json_only:
+        print("📋 JSON-only mode: skipping annotated video output")
+    else:
+        print(f"💾 Output will be saved to: {args.output}")
 
     try:
-        processor.process_video(source_path=source_path, target_path=args.output, reset_tracker=True)
+        json_path = processor.process_video(
+            source_path=source_path,
+            target_path=args.output,
+            reset_tracker=True,
+            eval_mode=args.eval_mode,
+            write_video=not args.json_only,
+        )
     finally:
-        if args.fix_rotation and source_path != args.source:
+        if rotation_tmp and os.path.isfile(rotation_tmp) and source_path == rotation_tmp:
             with contextlib.suppress(OSError):
-                os.unlink(source_path)
+                os.unlink(rotation_tmp)
 
     print("\n✅ Processing complete!")
-    print(f"📁 Output saved to: {args.output}")
+    if args.json_only:
+        print(f"📁 Detections JSON: {json_path}")
+    else:
+        print(f"📁 Annotated video: {args.output}")
+        print(f"📁 Detections JSON: {json_path}")
 
 
 if __name__ == "__main__":

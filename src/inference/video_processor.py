@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import supervision as sv
 from tqdm import tqdm
@@ -190,44 +190,84 @@ class VideoProcessor:
 
         return detection_data
 
+    def process_frame_model_only(self, frame, frame_number: int) -> dict[str, Any]:
+        """
+        YOLO output only: no per-class thresholds, ball padding, extra NMS, or ByteTrack.
+
+        Each frame is written as {\"frame_number\", \"objects\"} with canonical class_id 0–3.
+        """
+        result = self.model.predict(source=frame, conf=self.conf_min, iou=self.iou_threshold, verbose=False)[0]
+        detections = sv.Detections.from_ultralytics(result)
+        objects: list[dict[str, Any]] = []
+        for i in range(len(detections)):
+            bbox = detections.xyxy[i].tolist()
+            cid = int(detections.class_id[i])
+            conf = float(detections.confidence[i]) if detections.confidence is not None else None
+            objects.append({"bbox": bbox, "class_id": cid, "confidence": conf})
+        return {"frame_number": frame_number, "objects": objects}
+
     def process_video(
-        self, source_path: str, target_path: str, reset_tracker: bool = True, json_path: str | None = None
-    ):
+        self,
+        source_path: str,
+        target_path: str,
+        reset_tracker: bool = True,
+        json_path: str | None = None,
+        eval_mode: Literal["full", "model_only"] = "full",
+        write_video: bool = True,
+    ) -> str:
         """
         Process entire video and save annotated output.
 
         Args:
             source_path: Path to input video
-            target_path: Path to output video
-            reset_tracker: Whether to reset tracker before processing
+            target_path: Path to output video (unused if write_video=False; still used for default json name)
+            reset_tracker: Whether to reset tracker before processing (full mode only)
             json_path: Optional path to save bounding box data as JSON.
                       If None, auto-generates from target_path (e.g., output.mp4 -> output_detections.json)
+            eval_mode: \"full\" — pipeline with tracking and *_detections.json layout;
+                       \"model_only\" — raw YOLO boxes in \"objects\" per frame (for ablation eval).
+            write_video: If False, only write JSON (faster eval).
+
+        Returns:
+            Path to the written detections JSON file.
         """
-        if reset_tracker:
+        if eval_mode == "full" and reset_tracker:
             self.tracker.reset()
 
         # Auto-generate JSON path from target_path if not provided
         if json_path is None:
             base_name = os.path.splitext(target_path)[0]
-            json_path = f"{base_name}_detections.json"
+            suffix = "_detections.json" if eval_mode == "full" else "_model_only_detections.json"
+            json_path = f"{base_name}{suffix}"
 
         video_info = sv.VideoInfo.from_video_path(source_path)
         frame_generator = sv.get_video_frames_generator(source_path)
 
-        # Always collect detection data
-        all_detections = []
+        all_detections: list[dict[str, Any]] = []
 
-        with sv.VideoSink(target_path, video_info=video_info) as video_sink:
+        if write_video and eval_mode == "full":
+            with sv.VideoSink(target_path, video_info=video_info) as video_sink:
+                for frame_idx, frame in enumerate(tqdm(frame_generator, total=video_info.total_frames)):
+                    annotated_frame, detection_data = self.process_frame(frame, return_detections=True)
+                    frame_data = {"frame_number": frame_idx, **detection_data}
+                    all_detections.append(frame_data)
+                    video_sink.write_frame(annotated_frame)
+        elif write_video and eval_mode == "model_only":
+            with sv.VideoSink(target_path, video_info=video_info) as video_sink:
+                for frame_idx, frame in enumerate(tqdm(frame_generator, total=video_info.total_frames)):
+                    det = self.process_frame_model_only(frame, frame_idx)
+                    all_detections.append(det)
+                    video_sink.write_frame(frame)
+        else:
             for frame_idx, frame in enumerate(tqdm(frame_generator, total=video_info.total_frames)):
-                annotated_frame, detection_data = self.process_frame(frame, return_detections=True)
-                # Add frame number to detection data
-                frame_data = {"frame_number": frame_idx, **detection_data}
-                all_detections.append(frame_data)
+                if eval_mode == "full":
+                    _, detection_data = self.process_frame(frame, return_detections=True)
+                    frame_data = {"frame_number": frame_idx, **detection_data}
+                    all_detections.append(frame_data)
+                else:
+                    all_detections.append(self.process_frame_model_only(frame, frame_idx))
 
-                video_sink.write_frame(annotated_frame)
-
-        # Always save detection data to JSON
-        output_data = {
+        output_data: dict[str, Any] = {
             "video_info": {
                 "source_path": source_path,
                 "fps": video_info.fps,
@@ -237,8 +277,11 @@ class VideoProcessor:
             },
             "detections": all_detections,
         }
+        if eval_mode == "model_only":
+            output_data["eval_mode"] = "model_only"
 
         with open(json_path, "w") as f:
             json.dump(output_data, f, indent=2)
 
         print(f"📊 Detection data saved to: {json_path}")
+        return str(json_path)
