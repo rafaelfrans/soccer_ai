@@ -1,6 +1,15 @@
 # Evaluation splits (SoccerNet and manual GT)
 
-Use a **versioned manifest** to pin which raw videos and ground-truth JSON files belong to your primary benchmark. That keeps scores comparable across model checkpoints and pipeline changes.
+## What counts as ground truth
+
+- **Human / official labels** — e.g. SoccerNet-v3 `Labels-v3.json` (converted to `gt.json` by `scripts/prepare_soccer_net_eval.py`), or your own CVAT/Roboflow exports. The eval pipeline compares **predicted JSON** to this.
+- **Not GT** — raw clips under `testing/test_videos/` (e.g. `gunn1s.mp4`) have **no** bundled per-frame boxes in this repo. Inference alone on those files cannot yield a meaningful `eval.py` score without a separate label file.
+
+## SoccerNet: broadcast video vs v3 frames
+
+Per [SoccerNet Data](https://www.soccer-net.org/data), **full broadcast `.mkv` videos** (500+ games) require completing their **NDA** flow. That is separate from the **SoccerNet-v3** “action and replay images” release used here: **`Labels-v3.json` + `Frames-v3.zip`** per game (human-drawn boxes on those frames), downloaded via the **`SoccerNet`** pip package.
+
+Use a **versioned manifest** to pin which clips and `gt.json` files belong to your benchmark.
 
 ## Ground-truth JSON schema
 
@@ -37,6 +46,10 @@ One file per video, aligned frame-by-frame with inference output (`frame_number`
 `soccer_ai` includes a helper that downloads **one** SoccerNet-v3 game (`Labels-v3.json` + `Frames-v3.zip`), converts labels to this repo’s GT JSON, builds a **clip MP4** (ffmpeg), and prints paths for inference + eval.
 
 **Dependencies (not in base `requirements.txt`):** `pip install SoccerNet Pillow`, **ffmpeg** on `PATH`, and network access to the SoccerNet host.
+
+If download fails with **SSL certificate** errors (common behind some proxies), pass **`--insecure-ssl`** (disables cert verification for that run only).
+
+**Note:** `--max-frames N` caps at **N** but cannot exceed the number of labeled frames in that game’s annotation order (a short game may have fewer than N images).
 
 **Offline smoke test (no download, 2-frame toy clip):**
 

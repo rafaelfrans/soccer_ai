@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import shutil
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -34,6 +35,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from src.data.soccer_net_v3 import labels_v3_to_eval_gt  # noqa: E402
+
+
+def _apply_insecure_ssl() -> None:
+    """Use before SoccerNet urllib downloads if SSL verification fails (e.g. corporate proxy)."""
+    ssl._create_default_https_context = ssl._create_unverified_context  # noqa: SLF001
 
 
 def _require_soccer_net():
@@ -146,6 +152,9 @@ def run_sample(output_dir: Path, fps: float) -> None:
 
 
 def run_download(args: argparse.Namespace) -> None:
+    if getattr(args, "insecure_ssl", False):
+        _apply_insecure_ssl()
+        print("Warning: SSL certificate verification disabled for this download (--insecure-ssl).")
     SoccerNetDownloader, getListGames = _require_soccer_net()
     games = getListGames([args.split], task="frames")
     if args.game_index < 0 or args.game_index >= len(games):
@@ -204,6 +213,11 @@ def main() -> None:
         "--sample",
         action="store_true",
         help="Offline: use bundled Labels-v3-sample.json + synthetic PNGs (no SoccerNet download)",
+    )
+    p.add_argument(
+        "--insecure-ssl",
+        action="store_true",
+        help="Disable HTTPS certificate verification (use if download fails with SSL errors)",
     )
     args = p.parse_args()
 

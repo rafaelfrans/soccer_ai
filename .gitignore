@@ -9,6 +9,9 @@ __pycache__/
 # Inference outputs
 testing/
 
+# SoccerNet pip downloads (large zips + labels)
+data/SoccerNet/
+
 # Training runs (Ultralytics YOLO)
 runs/
 
