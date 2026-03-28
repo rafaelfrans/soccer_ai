@@ -45,7 +45,7 @@ One file per video, aligned frame-by-frame with inference output (`frame_number`
 
 `soccer_ai` includes a helper that downloads **one** SoccerNet-v3 game (`Labels-v3.json` + `Frames-v3.zip`), converts labels to this repo’s GT JSON, builds a **clip MP4** (ffmpeg), and prints paths for inference + eval.
 
-**Dependencies (not in base `requirements.txt`):** `pip install SoccerNet Pillow`, **ffmpeg** on `PATH`, and network access to the SoccerNet host.
+**Dependencies (not in base `requirements.txt`):** `pip install -r requirements-optional.txt`, **ffmpeg** on `PATH`, and network access to the SoccerNet host.
 
 If download fails with **SSL certificate** errors (common behind some proxies), pass **`--insecure-ssl`** (disables cert verification for that run only).
 

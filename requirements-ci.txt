@@ -1,0 +1,12 @@
+# Minimal deps for pytest on CI (and fast local test runs).
+# Do not install full requirements.txt here — ultralytics/torch/roboflow/SoccerNet
+# cause pip backtracking / resolution-too-deep on clean runners.
+#
+# Keep versions pinned so resolution stays shallow.
+
+numpy==1.26.4
+scipy==1.13.1
+PyYAML==6.0.2
+pytest==8.4.2
+# 1.1+ requires numpy>=2 on Python 3.9; keep 1.0.x to match numpy<2 (see requirements.txt).
+trackeval==1.0.0

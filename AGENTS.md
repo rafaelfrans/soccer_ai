@@ -66,9 +66,11 @@ Roboflow raw labels use different class IDs that get remapped during training:
 Agents and contributors must pass local CI **before** merging or pushing to `main` (matches GitHub Actions):
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt   # once per environment
+pip install ruff "mypy>=1.9.0" "types-PyYAML>=6.0" -r requirements-ci.txt   # once per environment (CI parity)
 ./scripts/ci_local.sh
 ```
+
+For training/inference locally, also `pip install -r requirements.txt`. SoccerNet clip prep: `pip install -r requirements-optional.txt`.
 
 Do not merge until this exits successfully. See `.cursor/rules/merge-gate-main.mdc`.
 

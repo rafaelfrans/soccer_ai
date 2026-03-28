@@ -1,0 +1,4 @@
+# Optional: SoccerNet-v3 clip + GT prep (scripts/prepare_soccer_net_eval.py)
+# Install on demand: pip install -r requirements-optional.txt
+SoccerNet>=0.1.62
+Pillow>=10.0.0

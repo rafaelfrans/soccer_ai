@@ -2,7 +2,7 @@
 """
 Download a single SoccerNet-v3 game (labels + frames zip), build a clip MP4 and eval GT JSON.
 
-Requires: pip install SoccerNet (see requirements-dev.txt), ffmpeg on PATH, network for download.
+Requires: pip install -r requirements-optional.txt (SoccerNet, Pillow), ffmpeg on PATH, network for download.
 
 Example:
   python scripts/prepare_soccer_net_eval.py --soccer-net-root data/SoccerNet --output-dir data/sn_eval_clip
