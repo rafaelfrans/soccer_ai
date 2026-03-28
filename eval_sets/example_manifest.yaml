@@ -1,0 +1,10 @@
+# Example layout for a fixed eval split. Copy and fill with real paths.
+version: 1
+name: example_split
+description: Replace with SoccerNet-sourced or in-house labeled clips; cite dataset papers in publications.
+
+entries:
+  - id: clip_001
+    video: /path/to/raw_clip.mp4
+    ground_truth: /path/to/clip_001_gt.json
+    notes: Optional free text

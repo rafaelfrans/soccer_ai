@@ -4,7 +4,7 @@ Object detection and tracking system for soccer videos using YOLO (ultralytics) 
 
 ## Tech Stack
 
-- **Python 3** with `ultralytics`, `roboflow`, `supervision`, `tqdm`, `pyyaml`
+- **Python 3** with `ultralytics`, `roboflow`, `supervision`, `tqdm`, `pyyaml`, `trackeval` (for optional tracking metrics)
 - **YOLO** for object detection (YOLOv8/v11 models)
 - **ByteTrack** (via `supervision`) for multi-object tracking
 - **Roboflow** for dataset management
@@ -25,6 +25,8 @@ soccer_ai/
 ├── train.py              # Training entry point (replaces Kaggle notebook)
 ├── inference.py           # Inference entry point (replaces Colab notebook)
 ├── merge_datasets.py      # Dataset merging utility
+├── eval.py                # Evaluate predictions JSON vs ground-truth JSON
+├── eval_sets/             # Versioned eval split manifests + GT schema notes
 ├── requirements.txt       # Dependencies
 └── src/
     ├── data/
@@ -34,6 +36,7 @@ soccer_ai/
     │   └── trainer.py         # YOLO training wrapper
     ├── inference/
     │   └── video_processor.py # VideoProcessor class + AnnotatorConfig
+    ├── eval/                  # mAP, ball metrics, optional MOT via TrackEval
     └── utils/                 # (reserved for future utilities)
 ```
 
@@ -42,6 +45,7 @@ soccer_ai/
 - `python train.py --help` — Train a model (downloads from Roboflow, remaps labels, trains)
 - `python inference.py --help` — Process a video with detection + tracking
 - `python merge_datasets.py --help` — Merge a ball-only dataset with the full 4-class dataset
+- `python eval.py --help` — Score `*_detections.json` (or model-only export) against ground-truth JSON
 
 ## Label Format
 

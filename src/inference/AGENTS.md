@@ -20,8 +20,9 @@ Main class. Initialized with a YOLO model path, then call `process_video()`.
 
 ### Output
 
-- Annotated video (mp4)
+- Annotated video (mp4), unless `write_video=False` (JSON-only eval)
 - Detection JSON (`*_detections.json`) — auto-generated alongside video, contains per-frame bounding boxes with tracker IDs and confidence scores
+- `eval_mode="model_only"` writes `*_model_only_detections.json` with per-frame `objects` (canonical class 0–3), no tracker or ball padding — use with `eval.py --mode model_only`
 
 ## `AnnotatorConfig`
 
