@@ -1,5 +1,59 @@
 # Evaluation splits (SoccerNet and manual GT)
 
+## Easiest path: SoccerNet-v3 → your model → numbers
+
+**SoccerNet does not hand you a single “GT video + JSON” file for the v3 frame split.** For each game you get:
+
+- **`Labels-v3.json`** — all bounding boxes, classes, and image metadata, in evaluation order.
+- **`Frames-v3.zip`** — the still images those labels refer to (action + replay frames), not a pre-encoded MP4.
+
+To compare your detector/tracker to those labels, this repo **stitches the images into `clip.mp4` in the same order** as the labels and writes **`gt.json`** in the [schema below](#ground-truth-json-schema). One command (after `pip install -r requirements-optional.txt` for download mode, and **ffmpeg** on your PATH):
+
+```bash
+python scripts/soccer_net_benchmark.py \
+  --model-path /path/to/best.pt \
+  --work-dir data/sn_bench \
+  --download --soccer-net-root data/SoccerNet --split test --game-index 0
+```
+
+That writes `clip.mp4`, `gt.json`, runs `inference.py`, and saves `eval_report.json` in `--work-dir`. If `No module named 'SoccerNet'` appears after `pip install`, you installed into a **different** Python than the one running the script — use `python3 -m pip install -r requirements-optional.txt` (same `python3` you use to run the benchmark). If you already have `Labels-v3.json` and `Frames-v3.zip` (or an extracted frames folder) on disk:
+
+```bash
+python scripts/soccer_net_benchmark.py \
+  --model-path /path/to/best.pt \
+  --work-dir data/sn_bench \
+  --from-files --labels /path/to/Labels-v3.json --frames /path/to/Frames-v3.zip
+```
+
+Offline / CI-style smoke test (no network): `--sample`. To only run inference + eval on an existing prepared folder: `--skip-prepare`. Tracking metrics (HOTA / MOTA / IDF1): add `--tracking` if your GT includes jersey `track_id`s (SoccerNet maps numeric jersey IDs when present).
+
+### Download only `Labels-v3.json` + `Frames-v3.zip` (no clip yet)
+
+If you only want the official SoccerNet files on disk (smaller step than building `clip.mp4`), use:
+
+```bash
+python3 -m pip install -r requirements-optional.txt
+python3 scripts/download_soccer_net_v3_game.py \
+  --soccer-net-root data/SoccerNet \
+  --split test \
+  --game-index 0
+```
+
+It prints absolute paths to **`Labels-v3.json`** and **`Frames-v3.zip`**. Repeat with `--game-index 1` for a second benchmark clip.
+
+Put **`soccer-net-root` on a local SSD folder** (avoid iCloud-synced-only paths) so opening large zips does not time out. Then build eval assets:
+
+```bash
+python3 scripts/prepare_soccer_net_eval.py \
+  --labels <printed Labels-v3.json> \
+  --frames <printed Frames-v3.zip> \
+  --output-dir data/sn_clip_a
+```
+
+We cannot download dataset files for you from this assistant — run the commands above on your machine (subject to SoccerNet’s license and terms).
+
+---
+
 ## What counts as ground truth
 
 - **Human / official labels** — e.g. SoccerNet-v3 `Labels-v3.json` (converted to `gt.json` by `scripts/prepare_soccer_net_eval.py`), or your own CVAT/Roboflow exports. The eval pipeline compares **predicted JSON** to this.
@@ -57,7 +111,23 @@ If download fails with **SSL certificate** errors (common behind some proxies), 
 python scripts/prepare_soccer_net_eval.py --sample --output-dir data/sn_eval_sample
 ```
 
-**Real data (one game from the frames split):**
+**Or** use only local files (no download this step; same output as above):
+
+```bash
+python scripts/prepare_soccer_net_eval.py \
+  --labels /path/to/Labels-v3.json \
+  --frames /path/to/Frames-v3.zip \
+  --output-dir data/sn_eval_clip
+# --frames can also be a directory of extracted images (basenames must match the label files).
+```
+
+**One-shot** prep + inference + `eval.py` (writes `eval_report.json` in the work directory):
+
+```bash
+python scripts/soccer_net_benchmark.py --model-path YOUR.pt --work-dir data/sn_bench --download --soccer-net-root data/SoccerNet
+```
+
+**Real data (one game from the frames split, with download):**
 
 ```bash
 python scripts/prepare_soccer_net_eval.py --soccer-net-root data/SoccerNet --output-dir data/sn_eval_clip --split test --game-index 0

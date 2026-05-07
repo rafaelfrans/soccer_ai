@@ -86,10 +86,10 @@ def voc_ap(recall: np.ndarray, precision: np.ndarray) -> float:
         return 0.0
     mrec = np.concatenate(([0.0], recall, [1.0]))
     mpre = np.concatenate(([0.0], precision, [0.0]))
-    for i in range(mpre.size - 1, 0, -1):
-        mpre[i - 1] = max(mpre[i - 1], mpre[i])
-    i = np.where(mrec[1:] != mrec[:-1])[0]
-    return float(np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1]))
+    for j in range(mpre.size - 1, 0, -1):
+        mpre[j - 1] = max(mpre[j - 1], mpre[j])
+    change_idx = np.where(mrec[1:] != mrec[:-1])[0]
+    return float(np.sum((mrec[change_idx + 1] - mrec[change_idx]) * mpre[change_idx + 1]))
 
 
 @dataclass

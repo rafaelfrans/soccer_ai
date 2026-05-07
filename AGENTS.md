@@ -27,7 +27,7 @@ soccer_ai/
 ├── merge_datasets.py      # Dataset merging utility
 ├── eval.py                # Evaluate predictions JSON vs ground-truth JSON
 ├── eval_sets/             # Versioned eval split manifests + GT schema notes
-├── scripts/               # prepare_soccer_net_eval.py (SoccerNet-v3 → clip + GT JSON)
+├── scripts/               # prepare_soccer_net_eval.py, soccer_net_benchmark.py, download_soccer_net_v3_game.py
 ├── requirements.txt       # Dependencies
 └── src/
     ├── data/
@@ -47,6 +47,7 @@ soccer_ai/
 - `python inference.py --help` — Process a video with detection + tracking
 - `python merge_datasets.py --help` — Merge a ball-only dataset with the full 4-class dataset
 - `python eval.py --help` — Score `*_detections.json` (or model-only export) against ground-truth JSON
+- `python scripts/download_soccer_net_v3_game.py --help` — SoccerNet-v3: download only `Labels-v3.json` + `Frames-v3.zip` for one game
 
 ## Label Format
 

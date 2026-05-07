@@ -12,6 +12,12 @@ testing/
 # SoccerNet pip downloads (large zips + labels)
 data/SoccerNet/
 
+# Ephemeral SoccerNet eval workspaces (clips, gt, preds, eval_report.json under data/sn_*)
+data/sn_*/
+
+# Cursor debug session logs
+.cursor/debug*.log
+
 # Training runs (Ultralytics YOLO)
 runs/
 
